@@ -27,8 +27,9 @@ for name in data_id:
             #t = f.read()
             for line in f.readlines():
                 line = line.strip('\n')
-                line.decode().encode('utf-8').replace("\r","")
-                t_all = line + t_all
+                #line.decode().encode('utf-8').replace("\r","")
+                line = unicode(line,encoding='utf-8')
+                t_all = line.replace("\r","") + t_all
     texts.append(t_all)
 data_df["text"] = texts
 
