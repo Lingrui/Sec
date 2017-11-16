@@ -1,4 +1,5 @@
 #!/usr/bin/python 
+#coding = utf-8
 from __future__ import print_function
 from __future__ import division
 
@@ -22,12 +23,12 @@ for name in data_id:
     for fname in sorted(os.listdir(prepro_dir)):
         if(re.match(name+'-',fname)):
             fpath = os.path.join(prepro_dir,fname)
-            with open(fpath,'r') as f:
+            f = open(fpath,'r')
             #t = f.read()
-                for line in f.readlines():
-                    line = line.strip('\n')
-            #t_all = t + t_all
-            t_all = line + t_all
+            for line in f.readlines():
+                line = line.strip('\n')
+                line.decode().encode('utf-8').replace("\r","")
+                t_all = line + t_all
     texts.append(t_all)
 data_df["text"] = texts
 
