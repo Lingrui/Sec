@@ -2,10 +2,10 @@
 from __future__ import print_function
 from __future__ import division
 
+import re
+import os
 import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
-import matplotlib.pyplot as plt
-import seaborn as sns  #visualization library based on matplotlib
 import nltk
 from nltk.corpus import stopwords
 import string
@@ -13,38 +13,45 @@ import xgboost as xgb
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.decomposition import TruncatedSVD
 from sklearn import ensemble, metrics, model_selection, naive_bayes
-color = sns.color_palette()
 
 eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
-
+prepro_dir = '/home/lcai/s2/sec_10k/preprocess/csv'
 ## Read the train and test dataset and check the top few lines ##
-train_df = pd.read_csv("./input/train.csv")
-test_df = pd.read_csv("./input/test.csv")
-print("Number of rows in train dataset : ",train_df.shape[0])
-print("Number of rows in test dataset : ",test_df.shape[0])
 
-cnt_srs = train_df['author'].value_counts()
-print("Author\tCounts")
-print(cnt_srs)
-## Prepare the data for modeling ###
-author_mapping_dict = {'EAP':0, 'HPL':1, 'MWS':2}
-train_y = train_df['author'].map(author_mapping_dict)
-train_id = train_df['id'].values
-test_id = test_df['id'].values
-
-######################stemming test###################
-'''
-stemmer = nltk.stem.PorterStemmer()
-train_df["text"] = train_df["text"].apply(lambda x: str([stemmer.stem(w) for w in nltk.word_tokenize(str(x).decode('utf-8'))]))
-#train_df["text"] = train_df["text"].apply(lambda x: str([stemmer.stem(w) for w in str(x).decode('utf-8').split()]))
-#print(train_df.head())
-'''
+data_df = pd.read_table("/home/lcai/s2/sec_10k/preprocess/status",header=None)
+data_id = data_df[0]
+data_y = data_df[1]
+print("Number of rows in dataset : ",data_df.shape[0])
 ##################################################
 
-cols_to_drop = ['id', 'text']
-train_X = train_df.drop(cols_to_drop+['author'], axis=1)
-test_X = test_df.drop(cols_to_drop, axis=1)
+i = 0 
+texts = []
+for name in data_id:
+	t_all = ''
+	for fname in sorted(os.listdir(prepro_dir)):
+		if(re.match(name+'-',fname)):
+			fpath = os.path.join(prepro_dir,fname)
+			f = open(fpath,'r')
+			t = f.read()
+			t_all = t + t_all 
+	texts.append(t_all)
+data_df["text"] = texts
+
+#split the data into a training set and a validation set 
+indices = np.arange(data.shape[0])
+np.random.shuffle(indices)
+data = data[indices]
+labels = labels[indices]
+num_validation_samples = int(VALIDATION_SPLIT * data.shape[0])
+
+x_train = data[:-num_validation_samples]
+y_train = labels[:-num_validation_samples]
+x_val = data[-num_validation_samples:]
+y_val = labels[-num_validation_samples:]
+
+
+
 
 ##META features###
 def metaFeature(train_df,test_df):
@@ -245,11 +252,6 @@ def tfidf_char(train_X,train_y,train_df,test_df):
     test_df = pd.concat([test_df, test_svd], axis=1)
     return train_df,test_df
 ###XGBoost model:
-'''
-cols_to_drop = ['id', 'text']
-train_X = train_df.drop(cols_to_drop+['author'], axis=1)
-test_X = test_df.drop(cols_to_drop, axis=1)
-'''
 metaFeature(train_df,test_df)
 train_df,test_df = tfidf_word(train_X,train_y,train_df,test_df)
 train_df,test_df = tfidf_char(train_X,train_y,train_df,test_df)
