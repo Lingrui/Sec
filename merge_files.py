@@ -1,7 +1,11 @@
 #!/usr/bin/python 
-#coding = utf-8
 from __future__ import print_function
 from __future__ import division
+from __future__ import absolute_import  
+# encoding=utf8 
+import sys
+reload(sys) 
+sys.setdefaultencoding('utf8')
 
 import re
 import os
@@ -9,8 +13,10 @@ import numpy as np # linear algebra
 import pandas as pd # data processing, CSV file I/O (e.g. pd.read_csv)
 import string
 prepro_dir = '/home/lcai/s2/sec_10k/preprocess/csv'
+#prepro_dir = '/home/lcai/s2/sec_10k/test/csv'
 ## Read the train and test dataset and check the top few lines ##
 data_df = pd.read_table("/home/lcai/s2/sec_10k/preprocess/status",header=None)
+#data_df = pd.read_table("/home/lcai/s2/sec_10k/test/status.test",header=None)
 data_id = data_df[0]
 data_y = data_df[1]
 print("Number of rows in dataset : ",data_df.shape[0])

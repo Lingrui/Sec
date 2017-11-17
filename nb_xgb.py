@@ -16,28 +16,13 @@ from sklearn import ensemble, metrics, model_selection, naive_bayes
 
 eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
-prepro_dir = '/home/lcai/s2/sec_10k/preprocess/csv'
 ## Read the train and test dataset and check the top few lines ##
 
-data_df = pd.read_table("/home/lcai/s2/sec_10k/preprocess/status",header=None)
-data_id = data_df[0]
-data_y = data_df[1]
+data_df = pd.read_csv("/home/lcai/s2/sec_10k/Sec/merged.csv")
+#data_id = data_df[0]
+#data_y = data_df[1]
 print("Number of rows in dataset : ",data_df.shape[0])
 ##################################################
-
-i = 0 
-texts = []
-for name in data_id:
-	t_all = ''
-	for fname in sorted(os.listdir(prepro_dir)):
-		if(re.match(name+'-',fname)):
-			fpath = os.path.join(prepro_dir,fname)
-			f = open(fpath,'r')
-			t = f.read()
-			t_all = t + t_all 
-	texts.append(t_all)
-data_df["text"] = texts
-
 #split the data into a training set and a validation set 
 indices = np.arange(data.shape[0])
 np.random.shuffle(indices)
