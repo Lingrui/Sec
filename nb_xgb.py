@@ -107,7 +107,8 @@ def cv_xgb(train_X,train_y,train_df,test_X):
         pred_val_y, pred_test_y, model = runXGB(dev_X, dev_y, val_X, val_y, test_X)
         pred_full_test = pred_full_test + pred_test_y
         pred_train[val_index,:] = pred_val_y
-        cv_scores.append(metrics.log_loss(val_y, pred_val_y))
+		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
+        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
     pred_full_test = pred_full_test / 5.
     return pred_full_test,cv_scores
 
@@ -122,7 +123,8 @@ def cv_mnb(train_df,train_tfidf,test_tfidf):
         pred_val_y, pred_test_y, model = runMNB(dev_X, dev_y, val_X, val_y, test_tfidf)
         pred_full_test = pred_full_test + pred_test_y
         pred_train[val_index,:] = pred_val_y
-        cv_scores.append(metrics.log_loss(val_y, pred_val_y))
+		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
+        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
     pred_full_test = pred_full_test / 5.
     return pred_full_test,cv_scores,pred_train
 
@@ -135,7 +137,7 @@ def tfidf_word(train_df,test_df):
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
     #Naive Bayes on Word Tfidf Vectorizer:
-    pred_full_test, cv_scores,pred_train = cv_mnb(train_X,train_y,train_df,train_tfidf,test_tfidf)
+    pred_full_test, cv_scores,pred_train = cv_mnb(train_df,train_tfidf,test_tfidf)
     print("Naive Bayes on Word Tfidf Vectorizer")
     print("Mean cv score : ", np.mean(cv_scores))
     #add the predictions as new features
@@ -166,7 +168,7 @@ def CountV_word(train_df,test_df):
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
     #build Multinomial NB model using count vectorizer based features.
-    pred_full_test,cv_scores,pred_train = cv_mnb(train_X,train_y,train_df,train_tfidf,test_tfidf)    
+    pred_full_test,cv_scores,pred_train = cv_mnb(train_df,train_tfidf,test_tfidf)    
     print("Multinomial NB model using count vectorizer based features")
     print("Mean cv score : ", np.mean(cv_scores))
 
@@ -185,7 +187,7 @@ def CountV_char(train_df,test_df):
     tfidf_vec.fit(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
-    pred_full_test,cv_scores,pred_train = cv_mnb(train_X,train_y,train_df,train_tfidf,test_tfidf)
+    pred_full_test,cv_scores,pred_train = cv_mnb(train_df,train_tfidf,test_tfidf)
     print("Fit transform the tfidf vectorizer")
     print("Mean cv score : ", np.mean(cv_scores))
 
@@ -204,7 +206,7 @@ def tfidf_char(train_df,test_df):
     full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
-    pred_full_test,cv_scores,pred_train = cv_mnb(train_X,train_y,train_df,train_tfidf,test_tfidf)
+    pred_full_test,cv_scores,pred_train = cv_mnb(train_df,train_tfidf,test_tfidf)
     print("Fit transform the tfidf vectorizer")
     print("Mean cv score : ", np.mean(cv_scores))
     # add the predictions as new features #
