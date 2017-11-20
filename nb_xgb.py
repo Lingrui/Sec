@@ -1,6 +1,7 @@
 #!/usr/bin/python 
 from __future__ import print_function
 from __future__ import division
+from __future__ import absolute_import
 
 import re
 import os
@@ -18,25 +19,14 @@ eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 ## Read the train and test dataset and check the top few lines ##
 
-data_df = pd.read_csv("/home/lcai/s2/sec_10k/Sec/merged.csv")
-#data_id = data_df[0]
-#data_y = data_df[1]
-print("Number of rows in dataset : ",data_df.shape[0])
+train_df = pd.read_csv("/home/lcai/s2/sec_10k/workspace/train.csv",header=0)
+test_df = pd.read_csv("/home/lcai/s2/sec_10k/workspace/test.csv",header=0)
+train_y = train_df['label'].values
+train_id = train_df['company'].values
+tet_id = test_df['company'].values
+
+print("Number of rows in dataset : ", train_df.shape[0])
 ##################################################
-#split the data into a training set and a validation set 
-indices = np.arange(data.shape[0])
-np.random.shuffle(indices)
-data = data[indices]
-labels = labels[indices]
-num_validation_samples = int(VALIDATION_SPLIT * data.shape[0])
-
-x_train = data[:-num_validation_samples]
-y_train = labels[:-num_validation_samples]
-x_val = data[-num_validation_samples:]
-y_val = labels[-num_validation_samples:]
-
-
-
 
 ##META features###
 def metaFeature(train_df,test_df):
@@ -68,12 +58,12 @@ def metaFeature(train_df,test_df):
 ###########A simple XGBoost model####################
 def runXGB(train_X, train_y, test_X, test_y=None, test_X2=None, seed_val=0, child=1, colsample=0.5):
     param = {}
-    param['objective'] = 'multi:softprob'
+    param['objective'] = 'binary:logistic'
     param['eta'] = 0.01
     param['max_depth'] = 3
     param['silent'] = 1
     param['num_class'] = 3
-    param['eval_metric'] = "mlogloss"  ###multiclass logloss 
+    param['eval_metric'] = "auc"  ###multiclass logloss 
     param['min_child_weight'] = child
     param['subsample'] = 0.5
     param['colsample_bytree'] = colsample
@@ -121,12 +111,12 @@ def cv_xgb(train_X,train_y,train_df,test_X):
     pred_full_test = pred_full_test / 5.
     return pred_full_test,cv_scores
 
-def cv_mnb(train_X,train_y,train_df,train_tfidf,test_tfidf):
+def cv_mnb(train_df,train_tfidf,test_tfidf):
     kf = model_selection.KFold(n_splits=5, shuffle=True, random_state=2017)
     cv_scores = []
     pred_full_test = 0
     pred_train = np.zeros([train_df.shape[0], 3])
-    for dev_index, val_index in kf.split(train_X):
+    for dev_index, val_index in kf.split(train_df):
         dev_X, val_X = train_tfidf[dev_index], train_tfidf[val_index]
         dev_y, val_y = train_y[dev_index], train_y[val_index]
         pred_val_y, pred_test_y, model = runMNB(dev_X, dev_y, val_X, val_y, test_tfidf)
@@ -138,7 +128,7 @@ def cv_mnb(train_X,train_y,train_df,train_tfidf,test_tfidf):
 
 ######Text Based Features#######
 ### Fit transform the tfidf vectorizer ###
-def tfidf_word(train_X,train_y,train_df,test_df):
+def tfidf_word(train_df,test_df):
 	#tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,1),use_idf=True)    
     tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,3),use_idf=True)    
     full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
@@ -169,7 +159,7 @@ def tfidf_word(train_X,train_y,train_df,test_df):
     return train_df,test_df
 #Naive Bayes on Word Count Vectorizer:
 ### Fit transform the count vectorizer ###
-def CountV_word(train_X,train_y,train_df,test_df):
+def CountV_word(train_df,test_df):
 	#tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,1))
     tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,3))
     tfidf_vec.fit(train_df['text'].values.tolist() + test_df['text'].values.tolist())
@@ -190,7 +180,7 @@ def CountV_word(train_X,train_y,train_df,test_df):
 
 #Naive Bayes on Character Count Vectorizer
 ### Fit transform the tfidf vectorizer ###
-def CountV_char(train_X,train_y,train_df,test_df):
+def CountV_char(train_df,test_df):
     tfidf_vec = CountVectorizer(ngram_range=(1,10), analyzer='char')
     tfidf_vec.fit(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
@@ -209,7 +199,7 @@ def CountV_char(train_X,train_y,train_df,test_df):
 
 #Naive Bayes on Character Tfidf Vectorizer:
 ### Fit transform the tfidf vectorizer ###
-def tfidf_char(train_X,train_y,train_df,test_df):
+def tfidf_char(train_df,test_df):
     tfidf_vec = TfidfVectorizer(ngram_range=(1,10), analyzer='char')
     full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
@@ -238,24 +228,24 @@ def tfidf_char(train_X,train_y,train_df,test_df):
     return train_df,test_df
 ###XGBoost model:
 metaFeature(train_df,test_df)
-train_df,test_df = tfidf_word(train_X,train_y,train_df,test_df)
-train_df,test_df = tfidf_char(train_X,train_y,train_df,test_df)
-CountV_word(train_X,train_y,train_df,test_df)
-CountV_char(train_X,train_y,train_df,test_df)
+train_df,test_df = tfidf_word(train_df,test_df)
+train_df,test_df = tfidf_char(train_df,test_df)
+CountV_word(train_df,test_df)
+CountV_char(train_df,test_df)
 
-cols_to_drop = ['id', 'text']
-train_X = train_df.drop(cols_to_drop+['author'], axis=1)
+cols_to_drop = ['company', 'text']
+train_X = train_df.drop(cols_to_drop+['lable'], axis=1)
 test_X = test_df.drop(cols_to_drop, axis=1)
 #########Print out training data######################
 train_X_df = pd.DataFrame(train_X)
-train_X_df.to_csv("xgb_input.csv",index=False)
+train_X_df.to_csv("../workspace/xgb_input.csv",index=False)
 #train_X_df.to_csv("countV_word.csv",index=False)
 ######################################################3
 pred_full_test, cv_scores = cv_xgb(train_X,train_y,train_df,test_X)
 print("cv scores : ", cv_scores)
 out_df = pd.DataFrame(pred_full_test)
-out_df.columns = ['EAP', 'HPL', 'MWS']
-out_df.insert(0, 'id', test_id)
-out_df.to_csv("sub_xgb.csv", index=False)
+out_df.columns = ['label']
+out_df.insert(0, 'company', test_id)
+out_df.to_csv("../workspace/prediction.csv", index=False)
 #out_df.to_csv("xgb_countV_word.csv", index=False)
 

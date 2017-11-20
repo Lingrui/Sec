@@ -42,7 +42,7 @@ data_df["text"] = texts
 #########Print out training data######################
 ######################################################3
 out_df = pd.DataFrame(data_df)
-out_df.columns = ['company', 'lable', 'text']
+out_df.columns = ['company', 'label', 'text']
 out_df.to_csv("merged.csv", index=False)
 #out_df.to_csv("xgb_countV_word.csv", index=False)
 
