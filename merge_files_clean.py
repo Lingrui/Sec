@@ -36,13 +36,13 @@ for name in data_id:
                 #line.decode().encode('utf-8').replace("\r","")
                 line = unicode(line,encoding='utf-8')
                 line.replace("\r","")
-                line.replace("[^0-9a-zA-Z]","")
+                new_line = re.sub("[^a-zA-Z]"," ",line)
                 words = []
-                for w in line.split():
+                for w in new_line.split():
                     if len(w) <= 2:
                         continue
-                    if w.isnumeric():
-                        continue
+                    #if w.isnumeric():
+                    #   continue
                     words.append(w)
                 line = ' '.join(words)
                 t_all = line + t_all
