@@ -20,8 +20,8 @@ eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 ## Read the train and test dataset and check the top few lines ##
 
-train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/clean_merged.csv",header=0)
-test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/clean_merged.csv",header=0)
+train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_500.csv",header=0)
+test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_500.csv",header=0)
 train_y = train_df['label'].values
 train_id = train_df['company'].values
 test_id = test_df['company'].values
