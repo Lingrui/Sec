@@ -3,6 +3,7 @@ from __future__ import print_function
 from __future__ import division
 from __future__ import absolute_import
 
+import sys
 import re
 import os
 import numpy as np # linear algebra
@@ -19,11 +20,11 @@ eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 ## Read the train and test dataset and check the top few lines ##
 
-train_df = pd.read_csv("/home/lcai/s2/sec_10k/workspace/train.csv",header=0)
-test_df = pd.read_csv("/home/lcai/s2/sec_10k/workspace/test.csv",header=0)
+train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/train_all.csv",header=0)
+test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
 train_y = train_df['label'].values
 train_id = train_df['company'].values
-tet_id = test_df['company'].values
+test_id = test_df['company'].values
 
 print("Number of rows in dataset : ", train_df.shape[0])
 ##################################################
@@ -59,16 +60,16 @@ def metaFeature(train_df,test_df):
 def runXGB(train_X, train_y, test_X, test_y=None, test_X2=None, seed_val=0, child=1, colsample=0.5):
     param = {}
     param['objective'] = 'binary:logistic'
-    param['eta'] = 0.01
+    param['eta'] = 0.001
     param['max_depth'] = 3
     param['silent'] = 1
-    param['num_class'] = 3
+    #param['num_class'] = 3
     param['eval_metric'] = "auc"  ###multiclass logloss 
     param['min_child_weight'] = child
     param['subsample'] = 0.5
     param['colsample_bytree'] = colsample
     param['seed'] = seed_val
-    num_rounds = 10000
+    num_rounds = 1000
 
     plst = list(param.items())
     xgtrain = xgb.DMatrix(train_X, label=train_y)
@@ -100,13 +101,14 @@ def cv_xgb(train_X,train_y,train_df,test_X):
     kf = model_selection.KFold(n_splits=5, shuffle=True, random_state=2017)
     cv_scores = []
     pred_full_test = 0
-    pred_train = np.zeros([train_df.shape[0], 3])
+    pred_train = np.zeros([train_df.shape[0], 1])
     for dev_index, val_index in kf.split(train_X):
         dev_X, val_X = train_X.loc[dev_index], train_X.loc[val_index]
         dev_y, val_y = train_y[dev_index], train_y[val_index]
         pred_val_y, pred_test_y, model = runXGB(dev_X, dev_y, val_X, val_y, test_X)
+        #print ("pred_val_y: ",pred_val_y)
         pred_full_test = pred_full_test + pred_test_y
-        pred_train[val_index,:] = pred_val_y
+        #pred_train[val_index,:] = pred_val_y
 		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
         cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
     pred_full_test = pred_full_test / 5.
@@ -116,7 +118,8 @@ def cv_mnb(train_df,train_tfidf,test_tfidf):
     kf = model_selection.KFold(n_splits=5, shuffle=True, random_state=2017)
     cv_scores = []
     pred_full_test = 0
-    pred_train = np.zeros([train_df.shape[0], 3])
+	#pred_train = np.zeros([train_df.shape[0], 2])
+    pred_train = np.zeros([train_df.shape[0],2])
     for dev_index, val_index in kf.split(train_df):
         dev_X, val_X = train_tfidf[dev_index], train_tfidf[val_index]
         dev_y, val_y = train_y[dev_index], train_y[val_index]
@@ -124,7 +127,7 @@ def cv_mnb(train_df,train_tfidf,test_tfidf):
         pred_full_test = pred_full_test + pred_test_y
         pred_train[val_index,:] = pred_val_y
 		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
-        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
+        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y[:,1]))
     pred_full_test = pred_full_test / 5.
     return pred_full_test,cv_scores,pred_train
 
@@ -132,7 +135,7 @@ def cv_mnb(train_df,train_tfidf,test_tfidf):
 ### Fit transform the tfidf vectorizer ###
 def tfidf_word(train_df,test_df):
 	#tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,1),use_idf=True)    
-    tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,3),use_idf=True)    
+    tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,1),use_idf=True)    
     full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -141,14 +144,12 @@ def tfidf_word(train_df,test_df):
     print("Naive Bayes on Word Tfidf Vectorizer")
     print("Mean cv score : ", np.mean(cv_scores))
     #add the predictions as new features
-    train_df["nb_tfidf_word_eap"] = pred_train[:,0]
-    train_df["nb_tfidf_word_hpl"] = pred_train[:,1]
-    train_df["nb_tfidf_word_mws"] = pred_train[:,2]
-    test_df["nb_tfidf_word_eap"] = pred_full_test[:,0]
-    test_df["nb_tfidf_word_hpl"] = pred_full_test[:,1]
-    test_df["nb_tfidf_word_mws"] = pred_full_test[:,2]
+    train_df["nb_tfidf_word_0"] = pred_train[:,0]
+    train_df["nb_tfidf_word_1"] = pred_train[:,1]
+    test_df["nb_tfidf_word_0"] = pred_full_test[:,0]
+    test_df["nb_tfidf_word_1"] = pred_full_test[:,1]
 	###SVD on word TFIDF:
-    n_comp = 100 ##recommended value for LSA
+    n_comp = 20 ##recommended value for LSA
     svd_obj = TruncatedSVD(n_components=n_comp, algorithm='arpack')
     svd_obj.fit(full_tfidf)
     train_svd = pd.DataFrame(svd_obj.transform(train_tfidf))
@@ -163,7 +164,7 @@ def tfidf_word(train_df,test_df):
 ### Fit transform the count vectorizer ###
 def CountV_word(train_df,test_df):
 	#tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,1))
-    tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,3))
+    tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,1))
     tfidf_vec.fit(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -173,17 +174,15 @@ def CountV_word(train_df,test_df):
     print("Mean cv score : ", np.mean(cv_scores))
 
     # add the predictions as new features #
-    train_df["nb_cvec_eap"] = pred_train[:,0]
-    train_df["nb_cvec_hpl"] = pred_train[:,1]
-    train_df["nb_cvec_mws"] = pred_train[:,2]
-    test_df["nb_cvec_eap"] = pred_full_test[:,0]
-    test_df["nb_cvec_hpl"] = pred_full_test[:,1]
-    test_df["nb_cvec_mws"] = pred_full_test[:,2]
+    train_df["nb_cvec_0"] = pred_train[:,0]
+    train_df["nb_cvec_1"] = pred_train[:,1]
+    test_df["nb_cvec_0"] = pred_full_test[:,0]
+    test_df["nb_cvec_1"] = pred_full_test[:,1]
 
 #Naive Bayes on Character Count Vectorizer
 ### Fit transform the tfidf vectorizer ###
 def CountV_char(train_df,test_df):
-    tfidf_vec = CountVectorizer(ngram_range=(1,10), analyzer='char')
+    tfidf_vec = CountVectorizer(ngram_range=(1,1), analyzer='char')
     tfidf_vec.fit(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -192,17 +191,15 @@ def CountV_char(train_df,test_df):
     print("Mean cv score : ", np.mean(cv_scores))
 
     # add the predictions as new features #
-    train_df["nb_cvec_char_eap"] = pred_train[:,0]
-    train_df["nb_cvec_char_hpl"] = pred_train[:,1]
-    train_df["nb_cvec_char_mws"] = pred_train[:,2]
-    test_df["nb_cvec_char_eap"] = pred_full_test[:,0]
-    test_df["nb_cvec_char_hpl"] = pred_full_test[:,1]
-    test_df["nb_cvec_char_mws"] = pred_full_test[:,2]
+    train_df["nb_cvec_char_0"] = pred_train[:,0]
+    train_df["nb_cvec_char_1"] = pred_train[:,1]
+    test_df["nb_cvec_char_0"] = pred_full_test[:,0]
+    test_df["nb_cvec_char_1"] = pred_full_test[:,1]
 
 #Naive Bayes on Character Tfidf Vectorizer:
 ### Fit transform the tfidf vectorizer ###
 def tfidf_char(train_df,test_df):
-    tfidf_vec = TfidfVectorizer(ngram_range=(1,10), analyzer='char')
+    tfidf_vec = TfidfVectorizer(ngram_range=(1,1), analyzer='char')
     full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -210,14 +207,12 @@ def tfidf_char(train_df,test_df):
     print("Fit transform the tfidf vectorizer")
     print("Mean cv score : ", np.mean(cv_scores))
     # add the predictions as new features #
-    train_df["nb_tfidf_char_eap"] = pred_train[:,0]
-    train_df["nb_tfidf_char_hpl"] = pred_train[:,1]
-    train_df["nb_tfidf_char_mws"] = pred_train[:,2]
-    test_df["nb_tfidf_char_eap"] = pred_full_test[:,0]
-    test_df["nb_tfidf_char_hpl"] = pred_full_test[:,1]
-    test_df["nb_tfidf_char_mws"] = pred_full_test[:,2]
+    train_df["nb_tfidf_char_0"] = pred_train[:,0]
+    train_df["nb_tfidf_char_1"] = pred_train[:,1]
+    test_df["nb_tfidf_char_0"] = pred_full_test[:,0]
+    test_df["nb_tfidf_char_1"] = pred_full_test[:,1]
     ##SVD on Character TFIDF:
-    n_comp = 100
+    n_comp = 20
     svd_obj = TruncatedSVD(n_components=n_comp, algorithm='arpack')
     svd_obj.fit(full_tfidf)
     train_svd = pd.DataFrame(svd_obj.transform(train_tfidf))
@@ -236,8 +231,8 @@ CountV_word(train_df,test_df)
 CountV_char(train_df,test_df)
 
 cols_to_drop = ['company', 'text']
-train_X = train_df.drop(cols_to_drop+['lable'], axis=1)
-test_X = test_df.drop(cols_to_drop, axis=1)
+train_X = train_df.drop(cols_to_drop+['label'], axis=1)
+test_X = test_df.drop(cols_to_drop+['label'], axis=1)
 #########Print out training data######################
 train_X_df = pd.DataFrame(train_X)
 train_X_df.to_csv("../workspace/xgb_input.csv",index=False)
