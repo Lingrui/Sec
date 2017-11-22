@@ -20,8 +20,8 @@ eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 ## Read the train and test dataset and check the top few lines ##
 
-train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_1000.csv",header=0)
-test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_1000.csv",header=0)
+train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
+test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
 train_y = train_df['label'].values
 train_id = train_df['company'].values
 test_id = test_df['company'].values
@@ -235,7 +235,7 @@ train_X = train_df.drop(cols_to_drop+['label'], axis=1)
 test_X = test_df.drop(cols_to_drop+['label'], axis=1)
 #########Print out training data######################
 train_X_df = pd.DataFrame(train_X)
-train_X_df.to_csv("../workspace/xgb_input.csv",index=False)
+train_X_df.to_csv("../workspace/test_all_xgb_input.csv",index=False)
 #train_X_df.to_csv("countV_word.csv",index=False)
 ######################################################3
 pred_full_test, cv_scores = cv_xgb(train_X,train_y,train_df,test_X)
@@ -243,6 +243,6 @@ print("cv scores : ", cv_scores)
 out_df = pd.DataFrame(pred_full_test)
 out_df.columns = ['label']
 out_df.insert(0, 'company', test_id)
-out_df.to_csv("../workspace/prediction.csv", index=False)
+out_df.to_csv("../workspace/test_all_prediction.csv", index=False)
 #out_df.to_csv("xgb_countV_word.csv", index=False)
 
