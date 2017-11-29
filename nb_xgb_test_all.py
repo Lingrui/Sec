@@ -19,9 +19,13 @@ from sklearn import ensemble, metrics, model_selection, naive_bayes
 eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 ## Read the train and test dataset and check the top few lines ##
-
-train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
-test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
+train_df = pd.DataFrame(columns=['company','label','text'])
+for pred_df in pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0,chunksize = 500):
+    train_df = pd.concat([train_df,pred_df],axis=0)
+train_df.to_csv('haha.csv', index=False)
+test_df = train_df
+#train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
+#test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
 train_y = train_df['label'].values
 train_id = train_df['company'].values
 test_id = test_df['company'].values
