@@ -19,16 +19,10 @@ from sklearn import ensemble, metrics, model_selection, naive_bayes
 eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 ## Read the train and test dataset and check the top few lines ##
-train_df = pd.DataFrame(columns=['company','label','text'])
-for pred_df in pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0,chunksize = 500):
-    train_df = pd.concat([train_df,pred_df],axis=0)
-train_df.to_csv('haha.csv', index=False)
-test_df = train_df
-#train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
-#test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0)
-train_y = train_df['label'].values.astype(int)
 
-print(train_y.shape)
+train_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_1000.csv",header=0)
+test_df = pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_1000.csv",header=0)
+train_y = train_df['label'].values
 train_id = train_df['company'].values
 test_id = test_df['company'].values
 
@@ -90,6 +84,15 @@ def runXGB(train_X, train_y, test_X, test_y=None, test_X2=None, seed_val=0, chil
     
     #cvresult = xgb.cv(plst,xgtrain,num_rounds,nfold=5,metrics='merror',early_stopping_rounds=50,show_progress=False)
     pred_test_y = model.predict(xgtest, ntree_limit = model.best_ntree_limit)
+    fea_df = pd.DataFrame(model.get_fscore().items(), columns=['feature','importance']).sort_values('importance', ascending=False)
+    fea_df.to_csv("feature.csv",index = False)
+    ''' 
+    model.save_model('test_500.model')
+    model.dump_model('test_500.raw.txt','test_500.featmap.txt')
+    '''
+    #xgb.dump(model, 'xgb.model.dump', with_stats = TRUE)
+    #cat(xgb.dump(model,with_stats = TRUE, dump_format='json'))
+
     if test_X2 is not None:
         xgtest2 = xgb.DMatrix(test_X2)
         pred_test_y2 = model.predict(xgtest2, ntree_limit = model.best_ntree_limit)
@@ -241,7 +244,7 @@ train_X = train_df.drop(cols_to_drop+['label'], axis=1)
 test_X = test_df.drop(cols_to_drop+['label'], axis=1)
 #########Print out training data######################
 train_X_df = pd.DataFrame(train_X)
-train_X_df.to_csv("../workspace/test_all_xgb_input.csv",index=False)
+train_X_df.to_csv("../workspace/xgb_input.csv",index=False)
 #train_X_df.to_csv("countV_word.csv",index=False)
 ######################################################3
 pred_full_test, cv_scores = cv_xgb(train_X,train_y,train_df,test_X)
@@ -249,6 +252,6 @@ print("cv scores : ", cv_scores)
 out_df = pd.DataFrame(pred_full_test)
 out_df.columns = ['label']
 out_df.insert(0, 'company', test_id)
-out_df.to_csv("../workspace/test_all_prediction.csv", index=False)
+out_df.to_csv("../workspace/prediction.csv", index=False)
 #out_df.to_csv("xgb_countV_word.csv", index=False)
 
