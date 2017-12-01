@@ -92,11 +92,7 @@ def runXGB(train_X, train_y, test_X, test_y=None, test_X2=None, seed_val=0, chil
     pred_test_y = model.predict(xgtest, ntree_limit = model.best_ntree_limit)
     fea_df = pd.DataFrame(model.get_fscore().items(), columns=['feature','importance']).sort_values('importance', ascending=False)
     fea_df.to_csv("test_all_feature.csv",index = False)
-    ''' 
-    model.save_model('test_500.model')
-    model.dump_model('test_500.raw.txt','test_500.featmap.txt')
-    '''
-
+    pred_test_y2 = 0 
     if test_X2 is not None:
         xgtest2 = xgb.DMatrix(test_X2)
         pred_test_y2 = model.predict(xgtest2, ntree_limit = model.best_ntree_limit)
@@ -115,17 +111,14 @@ def cv_xgb(train_X,train_y,train_df,test_X):
     cv_scores = []
     pred_full_test = 0
     pred_train = np.zeros([train_df.shape[0], 1])
+    pred_train, pred_temp, model = runXGB(train_X,train_y,test_X)
     for dev_index, val_index in kf.split(train_X):
         dev_X, val_X = train_X.loc[dev_index], train_X.loc[val_index]
         dev_y, val_y = train_y[dev_index], train_y[val_index]
         pred_val_y, pred_test_y, model = runXGB(dev_X, dev_y, val_X, val_y, test_X)
-        #print ("pred_val_y: ",pred_val_y)
         pred_full_test = pred_full_test + pred_test_y
-        #pred_train[val_index,:] = pred_val_y
-		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
         cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
-    pred_full_test = pred_full_test / 5.
-    return pred_full_test,cv_scores
+    return pred_train,cv_scores
 
 def cv_mnb(train_df,train_tfidf,test_tfidf):
     kf = model_selection.KFold(n_splits=5, shuffle=True, random_state=2017)
