@@ -118,7 +118,8 @@ def cv_xgb(train_X,train_y,train_df,test_X):
 		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
         cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
     pred_full_test = pred_full_test / 5.
-    return pred_full_test,cv_scores
+    #return pred_full_test,cv_scores
+    return pred_val_y,cv_scores
 
 def cv_mnb(train_df,train_tfidf,test_tfidf):
     kf = model_selection.KFold(n_splits=5, shuffle=True, random_state=2017)

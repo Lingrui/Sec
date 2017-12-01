@@ -112,10 +112,7 @@ def cv_xgb(train_X,train_y,train_df,test_X):
         dev_X, val_X = train_X.loc[dev_index], train_X.loc[val_index]
         dev_y, val_y = train_y[dev_index], train_y[val_index]
         pred_val_y, pred_test_y, model = runXGB(dev_X, dev_y, val_X, val_y, test_X)
-        #print ("pred_val_y: ",pred_val_y)
         pred_full_test = pred_full_test + pred_test_y
-        #pred_train[val_index,:] = pred_val_y
-		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
         cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
     pred_full_test = pred_full_test / 5.
     return pred_full_test,cv_scores

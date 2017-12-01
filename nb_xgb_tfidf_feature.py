@@ -151,7 +151,9 @@ def tfidf_word(train_df,test_df):
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
     ##print weight of tfidf################
     vectorizer = CountVectorizer()
-    count = vectorizer.fit_transform(train_df['text'].values.tolist())
+    count = vectorizer.fit_transform(train_df['text'].values)
+    word = vectorizer.get_feature_names()
+    print(word)
     transformer=TfidfTransformer()
     tfidf=transformer.fit_transform(count)
     weight = tfidf.toarray()
