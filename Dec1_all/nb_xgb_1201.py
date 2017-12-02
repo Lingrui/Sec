@@ -19,8 +19,7 @@ from sklearn import ensemble, metrics, model_selection, naive_bayes
 eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 ## Read the train and test dataset and check the top few lines ##
-w = np.genfromtxt("test_all.weight" , delimiter=',')
-print(len(w))
+
 train_df = pd.DataFrame(columns=['company','label','text'])
 for pred_df in pd.read_csv("/data/scratch/lingrui/sec_temp/workspace/test_all.csv",header=0,chunksize = 500):
     train_df = pd.concat([train_df,pred_df],axis=0)
@@ -79,14 +78,14 @@ def runXGB(train_X, train_y, test_X, test_y=None, test_X2=None, seed_val=0, chil
     num_rounds = 1000
 
     plst = list(param.items())
-    xgtrain = xgb.DMatrix(train_X, label=train_y,weight=w)
+    xgtrain = xgb.DMatrix(train_X, label=train_y)
 
     if test_y is not None:
-        xgtest = xgb.DMatrix(test_X, label=test_y,weight=w)
+        xgtest = xgb.DMatrix(test_X, label=test_y)
         watchlist = [ (xgtrain,'train'), (xgtest, 'test') ]
         model = xgb.train(plst, xgtrain, num_rounds, watchlist, early_stopping_rounds=50, verbose_eval=2000)
     else:
-        xgtest = xgb.DMatrix(test_X,weight=w)
+        xgtest = xgb.DMatrix(test_X)
         model = xgb.train(plst, xgtrain, num_rounds)
     
     #cvresult = xgb.cv(plst,xgtrain,num_rounds,nfold=5,metrics='merror',early_stopping_rounds=50,show_progress=False)
