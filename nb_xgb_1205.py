@@ -23,25 +23,33 @@ param = {'objective': 'binary:logistic',
         'eta': 0.001,
         'max_depth': 3, 
         'silent': 1, 
-        'eval_metric': 'auc' 
+        'eval_metric': 'auc', 
         'min_child_weight': 'child',
-        'subsample' 0.5, 
+        'subsample': 0.5, 
         'colsample_bytree': 'colsample',
         'seed': 2017
 }
 
 num_rounds = 1000
 
+train_col=['company','label','text']
+train_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
+test_col=['company','label','text']
+test_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
+
 def main():
     #Set seed for reproducibility
     np.random.seed(0)
-    
+    os.system('date')
     print("Loading data...")
     #Load the data from the CSV files
-    train_col=['company','label','text']
-    train_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
     training_data = load_data(train_file,train_col)
-    print (training_data.shape[0])
+    test_data = load_data(test_file,test_col)
+    print ("Vectorize data...")
+    os.system('date')
+    x,y,z = tfidf_v(training_data,test_data,'char')
+    print (x.shape)
+
 
 def load_data(file_name,column_name):
     load_df = pd.DataFrame(columns=column_name)
@@ -66,6 +74,14 @@ def metaFeature(d):
     d["num_words_title"] = d["text"].apply(lambda x: len([w for w in str(x).split() if w.istitle()]))
     ## Average length of the words in the text ##
     d["mean_word_len"] = d["text"].apply(lambda x: np.mean([len(w) for w in str(x).split()]))
+
+### Fit transform the tfidf vectorizer ###
+def tfidf_v(train_df,test_df,split_type):
+    tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,1),analyzer=split_type)
+    full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
+    train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
+    test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
+    return full_tfidf, train_tfidf, test_tfidf 
 
 
 
