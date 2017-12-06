@@ -20,10 +20,10 @@ import nltk
 from nltk.corpus import stopwords
 
 param = {'objective': 'binary:logistic',
-        'eta': 0.001,
+        'learning_rate': 0.001,
         'max_depth': 3, 
         'silent': 1, 
-        'eval_metric': 'auc', 
+#'eval_metric': 'auc', 
         'min_child_weight': 'child',
         'subsample': 0.5, 
         'colsample_bytree': 'colsample',
@@ -32,10 +32,16 @@ param = {'objective': 'binary:logistic',
 
 num_rounds = 1000
 
+eng_stopwords = set(stopwords.words("english"))
+pd.options.mode.chained_assignment = None
+
 train_col=['company','label','text']
 train_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
 test_col=['company','label','text']
 test_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
+
+model_xgb = xgb.XGBClassifier(**param)
+model_mnb = naive_bayes.MultinomialNB()
 
 def main():
     #Set seed for reproducibility
@@ -45,18 +51,33 @@ def main():
     #Load the data from the CSV files
     training_data = load_data(train_file,train_col)
     test_data = load_data(test_file,test_col)
-    print ("TFIDF Vectorize data...")
+    train_y = training_data['label'].values.astype(int)
+    test_id = test_data['company'].values
+    #Meta feature analysis
+    print ('Meta feature statistical...')
     os.system('date')
+    metaFeature(training_data)
+    metaFeature(test_data)
 
-    x,y,z = TfidfV(training_data,test_data,'char')
-    print (x.shape)
-
+    print ("TFIDF Vectorize data ...")
+    os.system('date')
+    full_tfidf_c,train_tfidf_c,test_tfidf_c = TfidfV(training_data,test_data,'char')
+    full_tfidf_w,train_tfidf_w,test_tfidf_w = TfidfV(training_data,test_data,'word')
+    pred_train,pred_test=cv(model_mnb,train_tfidfi_c,train_y_c)  
+    training_data['nb_tfidf_c_0'] = pred_train[:0]
+    training_data['nb_tfidf_c_1'] = pred_train[:1]
+    print (traing_data.head())
     print ('Count Vectorize data...')
-    
     os.system('date')
+    train_count_c,test_count_c = CountV(training_data,test_data,'char') 
+    train_count_w,test_count_w = CountV(training_data,test_data,'word') 
+
     os.system('date')
+
     os.system('date')
+    print ('Writing prediction to prediction.csv')
     os.system('date')
+
 
 def load_data(file_name,column_name):
     load_df = pd.DataFrame(columns=column_name)
@@ -117,8 +138,20 @@ def runMNB(train_X,train_y,test_X):
     model.fit(train_X,train_y)
     pred_test_y = model.predict_proba(test_X)
 
-
-
+def cv(model,X,Y):
+    K = 5 
+    kf = KFold(n_split=K, shuffle=True, random_state=2017)
+    i = 0 
+    for train, val in kf.split(X):
+        i += 1
+        model.fit(X[train,:],Y[train])
+        pred = model.predcit_proba(X[val,:])[:1]
+        print("auc %d/%d:" % (i,K),metrics.roc_auc_score(Y[val],pred))
+    model.fit(X,Y)
+    print('Predicting...')
+    Y_pre = model.predict_proba(Y_pre)
+    y_pre = model.predict_proba(x_pre)
+    return Y_pre,y_pre
 
 if __name__ == '__main__':
     main()
