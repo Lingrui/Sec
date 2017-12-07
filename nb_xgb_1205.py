@@ -15,6 +15,7 @@ import xgboost as xgb
 from sklearn import ensemble, metrics, model_selection, naive_bayes 
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
+from sklearn.model_selection import KFold
 
 import nltk
 from nltk.corpus import stopwords
@@ -36,9 +37,10 @@ eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 
 train_col=['company','label','text']
-train_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
+train_file = "/data/scratch/lingrui/sec_temp/workspace/test_200.csv"
 test_col=['company','label','text']
-test_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
+test_file = "/data/scratch/lingrui/sec_temp/workspace/test_200.csv"
+
 
 model_xgb = xgb.XGBClassifier(**param)
 model_mnb = naive_bayes.MultinomialNB()
@@ -53,6 +55,12 @@ def main():
     test_data = load_data(test_file,test_col)
     train_y = training_data['label'].values.astype(int)
     test_id = test_data['company'].values
+    N = train_y.shape[0]
+    N1 = np.sum(train_y == 1)
+    N0 = N - N1
+    model_xgb = xgb.XGBClassifier(scale_pos_weight=1.0*N0/N1,**param)
+    model_mnb = naive_bayes.MultinomialNB()
+
     #Meta feature analysis
     print ('Meta feature statistical...')
     os.system('date')
@@ -63,19 +71,65 @@ def main():
     os.system('date')
     full_tfidf_c,train_tfidf_c,test_tfidf_c = TfidfV(training_data,test_data,'char')
     full_tfidf_w,train_tfidf_w,test_tfidf_w = TfidfV(training_data,test_data,'word')
-    pred_train,pred_test=cv(model_mnb,train_tfidfi_c,train_y_c)  
-    training_data['nb_tfidf_c_0'] = pred_train[:0]
-    training_data['nb_tfidf_c_1'] = pred_train[:1]
-    print (traing_data.head())
+    print ("TFIDF MNB model on character")
+    os.system('date')
+    pred_train,pred_test=cv(model_mnb,train_tfidf_c,train_y,test_tfidf_c)  
+    training_data['nb_tfidf_c_0'] = pred_train[:,0]
+    training_data['nb_tfidf_c_1'] = pred_train[:,1]
+    test_data['nb_tfidf_c_0'] = pred_test[:,0]
+    test_data['nb_tfidf_c_1'] = pred_test[:,1]
+    print ("SVD on TFIDF character")
+    os.system('date')
+    SVD(training_data,test_data,'char',full_tfidf_c,train_tfidf_c,test_tfidf_c)
+
+    print ("TFIDF MNB model on word")
+    os.system('date')
+    pred_train,pred_test=cv(model_mnb,train_tfidf_w,train_y,test_tfidf_w)  
+    training_data['nb_tfidf_w_0'] = pred_train[:,0]
+    training_data['nb_tfidf_w_1'] = pred_train[:,1]
+    test_data['nb_tfidf_w_0'] = pred_test[:,0]
+    test_data['nb_tfidf_w_1'] = pred_test[:,1]
+    print ("SVD on TFIDF word")
+    os.system('date')
+    SVD(training_data,test_data,'word',full_tfidf_w,train_tfidf_w,test_tfidf_w)
+
     print ('Count Vectorize data...')
     os.system('date')
     train_count_c,test_count_c = CountV(training_data,test_data,'char') 
     train_count_w,test_count_w = CountV(training_data,test_data,'word') 
 
+    print ("CountV MNB model on character")
     os.system('date')
+    pred_train,pred_test=cv(model_mnb,train_count_c,train_y,test_count_c)  
+    training_data['nb_countv_c_0'] = pred_train[:,0]
+    training_data['nb_countv_c_1'] = pred_train[:,1]
+    test_data['nb_countv_c_0'] = pred_test[:,0]
+    test_data['nb_countv_c_1'] = pred_test[:,1]
+
+    print ("CountV MNB model on word")
+    os.system('date')
+    pred_train,pred_test=cv(model_mnb,train_count_w,train_y,test_count_w)  
+    training_data['nb_countv_w_0'] = pred_train[:,0]
+    training_data['nb_countv_w_1'] = pred_train[:,1]
+    test_data['nb_countv_w_0'] = pred_test[:,0]
+    test_data['nb_countv_w_1'] = pred_test[:,1]
+
+    os.system('date')
+    print ('Xgboost...')
+    cols_to_drop = ['company','text','label']
+    train_X = training_data.drop(cols_to_drop,axis=1)
+    test_X = test_data.drop(cols_to_drop,axis=1)
+    pred_train,pred_test=cv(model_xgb,train_X,train_y,test_X)  
 
     os.system('date')
     print ('Writing prediction to prediction.csv')
+    train_X_df = pd.DataFrame(train_X)
+    train_X_df.to_csv("test_xgb_input.csv",index=False)
+    out_df = pd.DataFrame(pred_test[:,1])
+    out_df.columns = ['label']
+    out_df.insert(0, 'company', test_id)
+    out_df.to_csv("./test_prediction.csv", index=False)
+    print ('Finished')
     os.system('date')
 
 
@@ -131,26 +185,23 @@ def SVD(train_df,test_df,split_type,full_tfidf,train_tfidf,test_tfidf):
     test_svd.columns = ['svd_'+split_type+'_'+str(i) for i in range(n_comp)]
     train_df = pd.concat([train_df, train_svd], axis=1)
     test_df = pd.concat([test_df, test_svd], axis=1)
-    return train_df,test_df
+    #return train_df,test_df
 
-def runMNB(train_X,train_y,test_X):
-    model = naive_bayes.MultinomialNB()
-    model.fit(train_X,train_y)
-    pred_test_y = model.predict_proba(test_X)
-
-def cv(model,X,Y):
+def cv(model,X,Y,x):
     K = 5 
-    kf = KFold(n_split=K, shuffle=True, random_state=2017)
+    kf = KFold(n_splits=K, shuffle=True, random_state=2017)
     i = 0 
     for train, val in kf.split(X):
         i += 1
         model.fit(X[train,:],Y[train])
-        pred = model.predcit_proba(X[val,:])[:1]
+        pred = model.predict_proba(X[val,:])[:,1]
         print("auc %d/%d:" % (i,K),metrics.roc_auc_score(Y[val],pred))
     model.fit(X,Y)
     print('Predicting...')
-    Y_pre = model.predict_proba(Y_pre)
-    y_pre = model.predict_proba(x_pre)
+    Y_pre = model.predict_proba(X)
+    print(Y_pre.shape)
+    print(len(Y_pre))
+    y_pre = model.predict_proba(x)
     return Y_pre,y_pre
 
 if __name__ == '__main__':
