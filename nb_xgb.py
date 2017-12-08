@@ -38,9 +38,9 @@ eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 
 train_col=['company','label','text']
-train_file = "/data/scratch/lingrui/sec_temp/workspace/test_200.csv"
+train_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
 test_col=['company','label','text']
-test_file = "/data/scratch/lingrui/sec_temp/workspace/test_200.csv"
+test_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
 def main():
     #Set seed for reproducibility
     np.random.seed(0)
@@ -62,7 +62,6 @@ def main():
     os.system('date')
     metaFeature(training_data)
     metaFeature(test_data)
-    '''
     print ("TFIDF Vectorize data ...")
     os.system('date')
     full_tfidf_c,train_tfidf_c,test_tfidf_c = TfidfV(training_data,test_data,'char')
@@ -109,7 +108,6 @@ def main():
     training_data['nb_countv_w_1'] = pred_train[:,1]
     test_data['nb_countv_w_0'] = pred_test[:,0]
     test_data['nb_countv_w_1'] = pred_test[:,1]
-    '''
     os.system('date')
     print ('Xgboost...')
     cols_to_drop = ['company','text','label']
@@ -120,11 +118,11 @@ def main():
     os.system('date')
     print ('Writing prediction to prediction.csv')
     train_X_df = pd.DataFrame(train_X)
-    train_X_df.to_csv("test_xgb_input.csv",index=False)
+    train_X_df.to_csv("xgb_input.csv",index=False)
     out_df = pd.DataFrame(pred_x[:,1])
     out_df.columns = ['label']
     out_df.insert(0, 'company', test_id)
-    out_df.to_csv("./test_prediction.csv", index=False)
+    out_df.to_csv("./prediction.csv", index=False)
     print ('Finished')
     os.system('date')
 
