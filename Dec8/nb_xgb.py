@@ -38,9 +38,9 @@ eng_stopwords = set(stopwords.words("english"))
 pd.options.mode.chained_assignment = None
 
 train_col=['company','label','text']
-train_file = "/data/scratch/lingrui/sec_temp/workspace/test_200.csv"
+train_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
 test_col=['company','label','text']
-test_file = "/data/scratch/lingrui/sec_temp/workspace/test_200.csv"
+test_file = "/data/scratch/lingrui/sec_temp/workspace/test_all.csv"
 def main():
     #Set seed for reproducibility
     np.random.seed(0)
@@ -76,7 +76,7 @@ def main():
     test_data['nb_tfidf_c_1'] = pred_test[:,1]
     print ("SVD on TFIDF character")
     os.system('date')
-    training_data,test_data = SVD(training_data,test_data,'char',full_tfidf_c,train_tfidf_c,test_tfidf_c)
+    SVD(training_data,test_data,'char',full_tfidf_c,train_tfidf_c,test_tfidf_c)
     print ("TFIDF MNB model on word")
     os.system('date')
     pred_train,pred_test=cv(model_mnb,train_tfidf_w,train_y,test_tfidf_w)  
@@ -86,7 +86,7 @@ def main():
     test_data['nb_tfidf_w_1'] = pred_test[:,1]
     print ("SVD on TFIDF word")
     os.system('date')
-    training_data,test_data = SVD(training_data,test_data,'word',full_tfidf_w,train_tfidf_w,test_tfidf_w)
+    SVD(training_data,test_data,'word',full_tfidf_w,train_tfidf_w,test_tfidf_w)
 
     print ('Count Vectorize data...')
     os.system('date')
@@ -117,8 +117,7 @@ def main():
 
     os.system('date')
     print ('Writing prediction to prediction.csv')
-    #train_X_df = pd.DataFrame(train_X)
-    train_X_df = pd.DataFrame(training_data.drop(cols_to_drop,axis=1))
+    train_X_df = pd.DataFrame(train_X)
     train_X_df.to_csv("xgb_input.csv",index=False)
     out_df = pd.DataFrame(pred_x[:,1])
     out_df.columns = ['label']
@@ -180,7 +179,7 @@ def SVD(train_df,test_df,split_type,full_tfidf,train_tfidf,test_tfidf):
     test_svd.columns = ['svd_'+split_type+'_'+str(i) for i in range(n_comp)]
     train_df = pd.concat([train_df, train_svd], axis=1)
     test_df = pd.concat([test_df, test_svd], axis=1)
-    return train_df,test_df
+    #return train_df,test_df
 
 def cv(model,X,Y,x):
     K = 5 
@@ -192,9 +191,6 @@ def cv(model,X,Y,x):
         pred = model.predict_proba(X[val,:])[:,1]
         print("auc %d/%d:" % (i,K),metrics.roc_auc_score(Y[val],pred))
     model.fit(X,Y)
-    if model == 'model_xgb':
-        f = open ("./feature.txt","w+")
-        print (model.feature_importances_,file = f)
     print('Predicting...')
     Y_pre = model.predict_proba(X)
     y_pre = model.predict_proba(x)
