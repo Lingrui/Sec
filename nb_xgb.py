@@ -56,7 +56,6 @@ def main():
     N0 = N - N1
     model_xgb = xgb.XGBClassifier(scale_pos_weight=1.0*N0/N1,**param)
     model_mnb = naive_bayes.MultinomialNB()
-
     #Meta feature analysis
     print ('Meta feature statistical...')
     os.system('date')
@@ -192,9 +191,12 @@ def cv(model,X,Y,x):
         pred = model.predict_proba(X[val,:])[:,1]
         print("auc %d/%d:" % (i,K),metrics.roc_auc_score(Y[val],pred))
     model.fit(X,Y)
-    if model == 'model_xgb':
+    #if model == 'model_xgb':
+    
+    if re.match('XGB',str(model)):
         f = open ("./feature.txt","w+")
-        print (model.feature_importances_,file = f)
+        #print (model.feature_importances_,file = f)
+        print(pd.DataFrame(model.feature_importances_, columns=['importance']),file = f)
     print('Predicting...')
     Y_pre = model.predict_proba(X)
     y_pre = model.predict_proba(x)
