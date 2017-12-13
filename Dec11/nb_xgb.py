@@ -73,11 +73,9 @@ def main():
     training_data['nb_tfidf_c_1'] = pred_train[:,1]
     test_data['nb_tfidf_c_0'] = pred_test[:,0]
     test_data['nb_tfidf_c_1'] = pred_test[:,1]
-    '''
     print ("SVD on TFIDF character")
     os.system('date')
     training_data,test_data = SVD(training_data,test_data,'char',full_tfidf_c,train_tfidf_c,test_tfidf_c)
-    '''
     print ("TFIDF MNB model on word")
     os.system('date')
     pred_train,pred_test=cv(model_mnb,train_tfidf_w,train_y,test_tfidf_w)  
