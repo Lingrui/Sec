@@ -171,7 +171,7 @@ def CountV(train_df,test_df,split_type):
 
 ### SVD on TFIDF 
 def SVD(train_df,test_df,split_type,full_tfidf,train_tfidf,test_tfidf):
-    n_comp = 20  #value for LSA
+    n_comp = 100  #value for LSA
     svd_obj = TruncatedSVD(n_components=n_comp, algorithm='arpack')
     svd_obj.fit(full_tfidf)
     train_svd = pd.DataFrame(svd_obj.transform(train_tfidf))
