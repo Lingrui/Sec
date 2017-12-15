@@ -4,12 +4,20 @@ from __future__ import division
 from __future__ import absolute_import
 import pickle
 import numpy as np
+DICT = []
+i = 0 
+with open('test.dictionary.txt','r') as dic:
+    for l in dic:
+        word = l.strip()
+        DICT.append((i,word))
+        i += 1 
+print (DICT.get('0')) 
 c = np.load("test_SVD.npy")
+'''
 for line in c:
-    '''
-    line.sort()
-    print(line)
-    '''
-    print(line.argsort()[-10:][::-1])
-#f = open ("Top10_words.txt","w+")
-#    print(line.argsort()[-10:][::-1],file =f )
+    #print(line.argsort()[-10:][::-1])
+    for s in line.argsort()[-3:][::-1]:
+
+        print(s,line[s])
+    print ()
+'''
