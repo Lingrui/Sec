@@ -17,6 +17,7 @@ from sklearn import ensemble, metrics, model_selection, naive_bayes
 from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer, CountVectorizer
 from sklearn.model_selection import KFold
+from sklearn.model_selection import StratifiedKFold
 
 import nltk
 from nltk.corpus import stopwords
@@ -113,16 +114,19 @@ def main():
     cols_to_drop = ['company','text','label']
     train_X = training_data.drop(cols_to_drop, axis=1).as_matrix()
     test_X = test_data.drop(cols_to_drop, axis=1).as_matrix()
-    pred_X,pred_x=cv(model_xgb,train_X,train_y,test_X)  
+    #pred_X,pred_x=cv(model_xgb,train_X,train_y,test_X)  
+    pred_X,pred_x=cv(model_xgb,train_X,train_y,test_X,test_id)  
 
     os.system('date')
     print ('Writing prediction to prediction.csv')
     #train_X_df = pd.DataFrame(train_X)
     train_X_df = pd.DataFrame(training_data.drop(cols_to_drop,axis=1))
     train_X_df.to_csv("xgb_input.csv",index=False)
-    out_df = pd.DataFrame(pred_x[:,1])
+    #out_df = pd.DataFrame(pred_x[:,1])
+    out_df = pd.DataFrame(pred_x)
     out_df.columns = ['label']
-    out_df.insert(0, 'company', test_id)
+    #out_df.insert(0, 'company', test_id)
+    out_df.insert(0, 'company', pred_X)
     out_df.to_csv("./prediction.csv", index=False)
     print ('Finished')
     os.system('date')
@@ -207,13 +211,16 @@ def SVD(train_df,test_df,split_type,full_tfidf,train_tfidf,test_tfidf):
     test_df = pd.concat([test_df, test_svd], axis=1)
     return train_df,test_df
 
-def cv(model,X,Y,x):
+def cv(model,X,Y,x,X_id):
     K = 5 
-    kf = KFold(n_splits=K, shuffle=True, random_state=2017)
+    #kf = KFold(n_splits=K, shuffle=True, random_state=2017)
+    kf = StratifiedKFold(n_splits=K, shuffle=True, random_state=2017)
     i = 0 
     Y_com = np.array([], dtype=np.float64)
-    pred_com =np.array([], dtype=np.float64)
-    for train, val in kf.split(X):
+    pred_com = np.array([], dtype=np.float64)
+    X_label = np.array([], dtype=np.float64)
+    #for train, val in kf.split(X):
+    for train, val in kf.split(X,Y):
         i += 1
         model.fit(X[train, :], Y[train])
         pred = model.predict_proba(X[val,:])[:,1]
@@ -221,6 +228,7 @@ def cv(model,X,Y,x):
         print("auc %d/%d:" % (i,K),metrics.roc_auc_score(Y[val],pred))
         Y_com = np.append(Y_com,Y[val])
         pred_com = np.append(pred_com,pred)
+        X_label = np.append(X_label,X_id[val])
     print ("AUC: ", metrics.roc_auc_score(Y_com,pred_com))
     model.fit(X,Y)
     #if model == 'model_xgb':
@@ -232,8 +240,9 @@ def cv(model,X,Y,x):
         f = open ("./feature.txt","w+")
         #print (model.feature_importances_,file = f)
         print(pd.DataFrame(model.feature_importances_, columns=['importance']),file = f)
-    
-    return Y_pre,y_pre
+        return X_label,pred_com 
+    else:  
+        return Y_pre,y_pre
 
 if __name__ == '__main__':
     main()
