@@ -5,6 +5,7 @@ from __future__ import absolute_import
 
 import requests 
 import bs4
+import sys,os
 
 _CIK_URI = 'http://www.sec.gov/cgi-bin/browse-edgar' \
     '?action=getcompany&CIK={s}&count=10&output=xml'
@@ -22,5 +23,7 @@ def get_cik(symbol):
     cik = page_data.companyinfo.cik.string
     return cik
 
+x = str((sys.argv[1]))    
+
 if __name__ == '__main__':
-    print (get_cik('T')) 
+    print (x,"\t",get_cik(x)) 
