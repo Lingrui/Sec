@@ -100,7 +100,7 @@ def cv_xgb(train_X,train_y,train_df,test_X):
     kf = model_selection.KFold(n_splits=5, shuffle=True, random_state=2017)
     cv_scores = []
     pred_full_test = 0
-    pred_train = np.zeros([train_df.shape[0], 3])
+    pred_train = np.zeros([train_df.shape[0], 2])
     for dev_index, val_index in kf.split(train_X):
         dev_X, val_X = train_X.loc[dev_index], train_X.loc[val_index]
         dev_y, val_y = train_y[dev_index], train_y[val_index]
@@ -108,7 +108,7 @@ def cv_xgb(train_X,train_y,train_df,test_X):
         pred_full_test = pred_full_test + pred_test_y
         pred_train[val_index,:] = pred_val_y
 		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
-        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
+        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y[:,1]))
     pred_full_test = pred_full_test / 5.
     return pred_full_test,cv_scores
 
@@ -116,7 +116,8 @@ def cv_mnb(train_df,train_tfidf,test_tfidf):
     kf = model_selection.KFold(n_splits=5, shuffle=True, random_state=2017)
     cv_scores = []
     pred_full_test = 0
-    pred_train = np.zeros([train_df.shape[0], 3])
+	#pred_train = np.zeros([train_df.shape[0], 2])
+    pred_train = np.zeros([train_df.shape[0],2])
     for dev_index, val_index in kf.split(train_df):
         dev_X, val_X = train_tfidf[dev_index], train_tfidf[val_index]
         dev_y, val_y = train_y[dev_index], train_y[val_index]
@@ -124,7 +125,7 @@ def cv_mnb(train_df,train_tfidf,test_tfidf):
         pred_full_test = pred_full_test + pred_test_y
         pred_train[val_index,:] = pred_val_y
 		#cv_scores.append(metrics.log_loss(val_y, pred_val_y))
-        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y))
+        cv_scores.append(metrics.roc_auc_score(val_y, pred_val_y[:,1]))
     pred_full_test = pred_full_test / 5.
     return pred_full_test,cv_scores,pred_train
 
@@ -132,7 +133,7 @@ def cv_mnb(train_df,train_tfidf,test_tfidf):
 ### Fit transform the tfidf vectorizer ###
 def tfidf_word(train_df,test_df):
 	#tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,1),use_idf=True)    
-    tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,3),use_idf=True)    
+    tfidf_vec = TfidfVectorizer(stop_words='english', ngram_range=(1,1),use_idf=True)    
     full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -141,14 +142,12 @@ def tfidf_word(train_df,test_df):
     print("Naive Bayes on Word Tfidf Vectorizer")
     print("Mean cv score : ", np.mean(cv_scores))
     #add the predictions as new features
-    train_df["nb_tfidf_word_eap"] = pred_train[:,0]
-    train_df["nb_tfidf_word_hpl"] = pred_train[:,1]
-    train_df["nb_tfidf_word_mws"] = pred_train[:,2]
-    test_df["nb_tfidf_word_eap"] = pred_full_test[:,0]
-    test_df["nb_tfidf_word_hpl"] = pred_full_test[:,1]
-    test_df["nb_tfidf_word_mws"] = pred_full_test[:,2]
+    train_df["nb_tfidf_word_0"] = pred_train[:,0]
+    train_df["nb_tfidf_word_1"] = pred_train[:,1]
+    test_df["nb_tfidf_word_0"] = pred_full_test[:,0]
+    test_df["nb_tfidf_word_1"] = pred_full_test[:,1]
 	###SVD on word TFIDF:
-    n_comp = 100 ##recommended value for LSA
+    n_comp = 20 ##recommended value for LSA
     svd_obj = TruncatedSVD(n_components=n_comp, algorithm='arpack')
     svd_obj.fit(full_tfidf)
     train_svd = pd.DataFrame(svd_obj.transform(train_tfidf))
@@ -163,7 +162,7 @@ def tfidf_word(train_df,test_df):
 ### Fit transform the count vectorizer ###
 def CountV_word(train_df,test_df):
 	#tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,1))
-    tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,3))
+    tfidf_vec = CountVectorizer(stop_words='english', ngram_range=(1,1))
     tfidf_vec.fit(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -173,17 +172,15 @@ def CountV_word(train_df,test_df):
     print("Mean cv score : ", np.mean(cv_scores))
 
     # add the predictions as new features #
-    train_df["nb_cvec_eap"] = pred_train[:,0]
-    train_df["nb_cvec_hpl"] = pred_train[:,1]
-    train_df["nb_cvec_mws"] = pred_train[:,2]
-    test_df["nb_cvec_eap"] = pred_full_test[:,0]
-    test_df["nb_cvec_hpl"] = pred_full_test[:,1]
-    test_df["nb_cvec_mws"] = pred_full_test[:,2]
+    train_df["nb_cvec_0"] = pred_train[:,0]
+    train_df["nb_cvec_1"] = pred_train[:,1]
+    test_df["nb_cvec_0"] = pred_full_test[:,0]
+    test_df["nb_cvec_1"] = pred_full_test[:,1]
 
 #Naive Bayes on Character Count Vectorizer
 ### Fit transform the tfidf vectorizer ###
 def CountV_char(train_df,test_df):
-    tfidf_vec = CountVectorizer(ngram_range=(1,10), analyzer='char')
+    tfidf_vec = CountVectorizer(ngram_range=(1,1), analyzer='char')
     tfidf_vec.fit(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -192,17 +189,15 @@ def CountV_char(train_df,test_df):
     print("Mean cv score : ", np.mean(cv_scores))
 
     # add the predictions as new features #
-    train_df["nb_cvec_char_eap"] = pred_train[:,0]
-    train_df["nb_cvec_char_hpl"] = pred_train[:,1]
-    train_df["nb_cvec_char_mws"] = pred_train[:,2]
-    test_df["nb_cvec_char_eap"] = pred_full_test[:,0]
-    test_df["nb_cvec_char_hpl"] = pred_full_test[:,1]
-    test_df["nb_cvec_char_mws"] = pred_full_test[:,2]
+    train_df["nb_cvec_char_0"] = pred_train[:,0]
+    train_df["nb_cvec_char_1"] = pred_train[:,1]
+    test_df["nb_cvec_char_0"] = pred_full_test[:,0]
+    test_df["nb_cvec_char_1"] = pred_full_test[:,1]
 
 #Naive Bayes on Character Tfidf Vectorizer:
 ### Fit transform the tfidf vectorizer ###
 def tfidf_char(train_df,test_df):
-    tfidf_vec = TfidfVectorizer(ngram_range=(1,10), analyzer='char')
+    tfidf_vec = TfidfVectorizer(ngram_range=(1,1), analyzer='char')
     full_tfidf = tfidf_vec.fit_transform(train_df['text'].values.tolist() + test_df['text'].values.tolist())
     train_tfidf = tfidf_vec.transform(train_df['text'].values.tolist())
     test_tfidf = tfidf_vec.transform(test_df['text'].values.tolist())
@@ -210,14 +205,12 @@ def tfidf_char(train_df,test_df):
     print("Fit transform the tfidf vectorizer")
     print("Mean cv score : ", np.mean(cv_scores))
     # add the predictions as new features #
-    train_df["nb_tfidf_char_eap"] = pred_train[:,0]
-    train_df["nb_tfidf_char_hpl"] = pred_train[:,1]
-    train_df["nb_tfidf_char_mws"] = pred_train[:,2]
-    test_df["nb_tfidf_char_eap"] = pred_full_test[:,0]
-    test_df["nb_tfidf_char_hpl"] = pred_full_test[:,1]
-    test_df["nb_tfidf_char_mws"] = pred_full_test[:,2]
+    train_df["nb_tfidf_char_0"] = pred_train[:,0]
+    train_df["nb_tfidf_char_1"] = pred_train[:,1]
+    test_df["nb_tfidf_char_0"] = pred_full_test[:,0]
+    test_df["nb_tfidf_char_1"] = pred_full_test[:,1]
     ##SVD on Character TFIDF:
-    n_comp = 100
+    n_comp = 20
     svd_obj = TruncatedSVD(n_components=n_comp, algorithm='arpack')
     svd_obj.fit(full_tfidf)
     train_svd = pd.DataFrame(svd_obj.transform(train_tfidf))
