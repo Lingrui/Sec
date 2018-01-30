@@ -1,0 +1,9 @@
+line replace [^0-9a-zA-Z] -> ' ' 
+words = []
+for w in line.split():
+    if len(w) <=2:
+        continue
+    if 全是数字: 
+        continue
+    words.push_back(w)
+line = ' '.join(words)

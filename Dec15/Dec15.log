@@ -1,0 +1,54 @@
+Fri Dec 15 11:42:45 EST 2017
+Fri Dec 15 11:43:09 EST 2017
+Fri Dec 15 11:53:39 EST 2017
+Fri Dec 15 12:38:50 EST 2017
+Fri Dec 15 12:38:50 EST 2017
+Fri Dec 15 12:38:51 EST 2017
+Fri Dec 15 12:38:58 EST 2017
+Fri Dec 15 13:24:23 EST 2017
+Fri Dec 15 13:24:23 EST 2017
+Fri Dec 15 13:24:29 EST 2017
+Fri Dec 15 13:24:33 EST 2017
+Fri Dec 15 13:24:33 EST 2017
+Loading data...
+Meta feature statistical...
+TFIDF Vectorize data ...
+TFIDF MNB model on character
+auc 1/5: 0.544131455399
+auc 2/5: 0.512589073634
+auc 3/5: 0.591964285714
+auc 4/5: 0.523186033824
+auc 5/5: 0.460262486329
+Predicting...
+TFIDF MNB model on word
+auc 1/5: 0.634507042254
+auc 2/5: 0.473792557403
+auc 3/5: 0.405505952381
+auc 4/5: 0.500454628114
+auc 5/5: 0.486693401385
+Predicting...
+SVD on TFIDF word
+Count Vectorize data...
+CountV MNB model on character
+auc 1/5: 0.759624413146
+auc 2/5: 0.548851939826
+auc 3/5: 0.669791666667
+auc 4/5: 0.630660120022
+auc 5/5: 0.564801312432
+Predicting...
+CountV MNB model on word
+auc 1/5: 0.810328638498
+auc 2/5: 0.627553444181
+auc 3/5: 0.648883928571
+auc 4/5: 0.74358974359
+auc 5/5: 0.676904848706
+Predicting...
+Xgboost...
+auc 1/5: 0.996713615023
+auc 2/5: 0.947743467933
+auc 3/5: 0.904910714286
+auc 4/5: 0.951627568649
+auc 5/5: 0.947685016405
+Predicting...
+Writing prediction to prediction.csv
+Finished

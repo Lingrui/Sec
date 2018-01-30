@@ -1,0 +1,58 @@
+/usr/local/lib/python2.7/dist-packages/sklearn/cross_validation.py:44: DeprecationWarning: This module was deprecated in version 0.18 in favor of the model_selection module into which all the refactored classes and functions are moved. Also note that the interface of the new CV iterators are different from that of this module. This module will be removed in 0.20.
+  "This module will be removed in 0.20.", DeprecationWarning)
+Fri Dec  8 10:29:12 EST 2017
+Fri Dec  8 10:29:37 EST 2017
+Fri Dec  8 10:40:03 EST 2017
+Fri Dec  8 11:28:06 EST 2017
+Fri Dec  8 11:28:06 EST 2017
+Fri Dec  8 11:28:07 EST 2017
+Fri Dec  8 11:28:07 EST 2017
+Fri Dec  8 11:28:15 EST 2017
+Fri Dec  8 12:16:17 EST 2017
+Fri Dec  8 12:16:17 EST 2017
+Fri Dec  8 12:16:19 EST 2017
+Fri Dec  8 12:16:27 EST 2017
+Fri Dec  8 12:16:27 EST 2017
+Loading data...
+Meta feature statistical...
+TFIDF Vectorize data ...
+TFIDF MNB model on character
+auc 1/5: 0.544131455399
+auc 2/5: 0.512589073634
+auc 3/5: 0.591964285714
+auc 4/5: 0.523186033824
+auc 5/5: 0.460262486329
+Predicting...
+SVD on TFIDF character
+TFIDF MNB model on word
+auc 1/5: 0.634507042254
+auc 2/5: 0.473792557403
+auc 3/5: 0.405505952381
+auc 4/5: 0.500454628114
+auc 5/5: 0.486693401385
+Predicting...
+SVD on TFIDF word
+Count Vectorize data...
+CountV MNB model on character
+auc 1/5: 0.759624413146
+auc 2/5: 0.548851939826
+auc 3/5: 0.669791666667
+auc 4/5: 0.630660120022
+auc 5/5: 0.564801312432
+Predicting...
+CountV MNB model on word
+auc 1/5: 0.810328638498
+auc 2/5: 0.627553444181
+auc 3/5: 0.648883928571
+auc 4/5: 0.74358974359
+auc 5/5: 0.676904848706
+Predicting...
+Xgboost...
+auc 1/5: 0.98544600939
+auc 2/5: 0.93855898654
+auc 3/5: 0.945833333333
+auc 4/5: 0.923986179305
+auc 5/5: 0.961538461538
+Predicting...
+Writing prediction to prediction.csv
+Finished

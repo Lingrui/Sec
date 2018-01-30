@@ -1,0 +1,23 @@
+Mon Dec 18 15:53:46 EST 2017
+Mon Dec 18 15:54:10 EST 2017
+Mon Dec 18 15:54:10 EST 2017
+Mon Dec 18 16:06:42 EST 2017
+Mon Dec 18 16:19:38 EST 2017
+Mon Dec 18 16:19:41 EST 2017
+Mon Dec 18 16:19:41 EST 2017
+Loading data...
+Meta feature statistical...
+TFIDF Vectorize data ...
+TFIDF MNB model on word
+Count Vectorize data...
+CountV MNB model on word
+Xgboost...
+auc 1/5: 0.75937183384
+auc 2/5: 0.663627152989
+auc 3/5: 0.820269777616
+auc 4/5: 0.682646737149
+auc 5/5: 0.740430185928
+AUC:  0.731124208503
+Predicting...
+Writing prediction to prediction.csv
+Finished
